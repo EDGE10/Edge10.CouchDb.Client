@@ -5,6 +5,20 @@ namespace Edge10.CouchDb.Client.Tests
 	[TestFixture]
 	public class TestViewParameters
 	{
+		public void CreateQuerySting_Check_Http_Params_Formatting()
+		{
+			var parameters = new ViewParameters("view", "designdoc")
+			{
+				Descending = true,
+				Limit      = 123
+			};
+
+			parameters.QueryStringParameters.Add("custom", "123");
+
+			var queryString = parameters.CreateQueryString();
+			Assert.AreEqual("?descending=true&limit=123", queryString);
+		}
+
 		[Test]
 		public void CreateQueryString_Includes_All_Settings()
 		{

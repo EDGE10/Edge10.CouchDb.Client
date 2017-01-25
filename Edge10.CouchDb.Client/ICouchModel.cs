@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Edge10.CouchDb.Client
 {
@@ -9,10 +8,9 @@ namespace Edge10.CouchDb.Client
 	public interface ICouchModel
 	{
 		/// <summary>
-		/// The CouchDB ID for this document.  This will be converted to a <see cref="string"/>
-		/// for DB storage.
+		/// The CouchDB ID for this document.
 		/// </summary>
-		Guid Id { get; set; }
+		string Id { get; set; }
 
 		/// <summary>
 		/// The CouchDB Revision number for this document.  This will be populated from the

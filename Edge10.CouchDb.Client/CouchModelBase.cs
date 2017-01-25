@@ -1,22 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace Edge10.CouchDb.Client
 {
 	/// <summary>
 	/// A base class for <see cref="ICouchModel"/> instances.
 	/// </summary>
-	/// <typeparam name="TConcrete">The type of the concrete.</typeparam>
-	public abstract class BaseCouchModel<TConcrete> : ICouchModel where TConcrete : ICouchModel
+	public abstract class CouchModelBase : ICouchModel
 	{
 		/// <summary>
-		/// The CouchDB ID for this document.  This will be converted to a <see cref="string"/>
-		/// for DB storage.
+		/// The CouchDB ID for this document.
 		/// </summary>
 		[JsonProperty(PropertyName = "_id")]
-		public Guid Id { get; set; }
+		public string Id { get; set; }
 
 		/// <summary>
 		/// The CouchDB Revision number for this document.  This will be populated from the

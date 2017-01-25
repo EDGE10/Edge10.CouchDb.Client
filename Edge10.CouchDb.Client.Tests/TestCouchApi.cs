@@ -660,7 +660,7 @@ namespace Edge10.CouchDb.Client.Tests
 		[Test]
 		public async Task GetDocumentsAsync_Returns_Documents_From_Server()
 		{
-			var ids         = new[] { Guid.NewGuid(), Guid.NewGuid() };
+			var ids         = new[] { Guid.NewGuid().ToString(), Guid.NewGuid().ToString() };
 			var expectedUrl = "https://server:1234/database/_all_docs?include_docs=true";
 			var response    = new HttpResponseMessage(HttpStatusCode.OK)
 			{
@@ -716,7 +716,7 @@ namespace Edge10.CouchDb.Client.Tests
 		[Test]
 		public async Task GetDocumentsAsync_Splits_Large_Requests_Into_Packets()
 		{
-			var ids             = new[] { Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid() };
+			var ids             = new[] { Guid.NewGuid().ToString(), Guid.NewGuid().ToString(), Guid.NewGuid().ToString() };
 			var expectedUrl     = "https://server:1234/database/_all_docs?include_docs=true";
 			var packet1Response = new HttpResponseMessage(HttpStatusCode.OK)
 			{
@@ -881,7 +881,7 @@ namespace Edge10.CouchDb.Client.Tests
 		[Test]
 		public void CreateDocumentAsync_Rethrows_Http_Exceptions()
 		{
-			var model = new DummyCouchModel { Id = Guid.NewGuid() };
+			var model = new DummyCouchModel { Id = Guid.NewGuid().ToString() };
 
 			//setup a PUT call that returns a failure code
 			_httpClient.Setup(c => c.PutAsync(GetDocumentUri(model.Id.ToString()), It.IsAny<HttpContent>()))
@@ -935,7 +935,7 @@ namespace Edge10.CouchDb.Client.Tests
 		[Test]
 		public async Task CreateDocumentAsync_Uses_Id_If_Specified()
 		{
-			var id    = Guid.NewGuid();
+			var id    = Guid.NewGuid().ToString();
 			var model = new DummyCouchModel { Id = id };
 
 			//create a server response
@@ -965,7 +965,7 @@ namespace Edge10.CouchDb.Client.Tests
 		[Test]
 		public void UpdateDocumentAsync_Rethrows_Http_Exceptions()
 		{
-			var model = new DummyCouchModel { Id = Guid.NewGuid() };
+			var model = new DummyCouchModel { Id = Guid.NewGuid().ToString() };
 
 			//setup a PUT call that returns a failure code
 			_httpClient.Setup(c => c.PutAsync(GetDocumentUri(model.Id.ToString()), It.IsAny<HttpContent>()))
@@ -979,7 +979,7 @@ namespace Edge10.CouchDb.Client.Tests
 		[Test]
 		public void UpdateDocumentAsync_Throws_ConflictException_For_Conflict_StatusCode()
 		{
-			var model = new DummyCouchModel { Id = Guid.NewGuid() };
+			var model = new DummyCouchModel { Id = Guid.NewGuid().ToString() };
 
 			//setup a PUT call that returns a failure code
 			_httpClient.Setup(c => c.PutAsync(GetDocumentUri(model.Id.ToString()), It.IsAny<HttpContent>()))
@@ -993,7 +993,7 @@ namespace Edge10.CouchDb.Client.Tests
 		[Test]
 		public async Task UpdateDocumentAsync_Sends_Correct_Content_To_Server()
 		{
-			var model = new DummyCouchModel { Id = Guid.NewGuid(), Rev = "123" };
+			var model = new DummyCouchModel { Id = Guid.NewGuid().ToString(), Rev = "123" };
 
 			//create a server response
 			var couchResponse = new CouchUpdateResponse { Rev = "new rev" };
@@ -1037,7 +1037,7 @@ namespace Edge10.CouchDb.Client.Tests
 		[Test]
 		public void BulkUpdateAsync_Throws_On_Not_Successful_Response()
 		{
-			var doc = new DummyCouchModel { Id = Guid.NewGuid() };
+			var doc = new DummyCouchModel { Id = Guid.NewGuid().ToString() };
 
 			//setup a POST call that returns a failure code
 			_httpClient.Setup(c => c.PostAsync(GetBulkUri(), It.IsAny<HttpContent>()))
@@ -1050,7 +1050,7 @@ namespace Edge10.CouchDb.Client.Tests
 		[Test]
 		public void BulkUpdateAsync_Throws_On_Conflict_For_Some_Document()
 		{
-			var docs = new[] { new DummyCouchModel { Id = Guid.NewGuid() }, new DummyCouchModel { Id = Guid.NewGuid() } };
+			var docs = new[] { new DummyCouchModel { Id = Guid.NewGuid().ToString() }, new DummyCouchModel { Id = Guid.NewGuid().ToString() } };
 			var couchResponse = new[]
 			{
 				new CouchBulkUpdateResponseItem { Id = docs[0].Id, Ok = true, Rev = "222" },
@@ -1065,13 +1065,13 @@ namespace Edge10.CouchDb.Client.Tests
 				.ReturnsAsync(response);
 
 			var ex = Assert.ThrowsAsync<ConflictException>(() => _couchApi.BulkUpdateAsync(docs));
-			Assert.IsTrue(ex.Message.Contains(docs[1].Id.ToString()));
+			Assert.IsTrue(ex.Message.Contains(docs[1].Id));
 		}
 
 		[Test]
 		public void BulkUpdateAsync_Throws_On_Some_Other_Error_In_Result()
 		{
-			var docs = new[] { new DummyCouchModel { Id = Guid.NewGuid() }, new DummyCouchModel { Id = Guid.NewGuid() } };
+			var docs = new[] { new DummyCouchModel { Id = Guid.NewGuid().ToString() }, new DummyCouchModel { Id = Guid.NewGuid().ToString() } };
 			var couchResponse = new[]
 			{
 				new CouchBulkUpdateResponseItem { Id = docs[0].Id, Ok = false, Error = "unknown error", Reason = "Don't know" },
@@ -1086,13 +1086,13 @@ namespace Edge10.CouchDb.Client.Tests
 				.ReturnsAsync(response);
 
 			var ex = Assert.ThrowsAsync<HttpRequestException>(() => _couchApi.BulkUpdateAsync(docs));
-			Assert.IsTrue(ex.Message.Contains(docs[0].Id.ToString()));
+			Assert.IsTrue(ex.Message.Contains(docs[0].Id));
 		}
 
 		[Test]
 		public async Task BulkUpdateAsync_Doesnt_Throw_On_Error_In_Result_If_No_Error_Set()
 		{
-			var docs = new[] { new DummyCouchModel { Id = Guid.NewGuid() }, new DummyCouchModel { Id = Guid.NewGuid() } };
+			var docs = new[] { new DummyCouchModel { Id = Guid.NewGuid().ToString() }, new DummyCouchModel { Id = Guid.NewGuid().ToString() } };
 			var couchResponse = new[]
 			{
 				new CouchBulkUpdateResponseItem { Id = docs[0].Id, Ok = false, Error = null, Reason = "Don't know" },
@@ -1113,7 +1113,7 @@ namespace Edge10.CouchDb.Client.Tests
 		[Test]
 		public async Task BulkUpdateAsync_Sends_Correct_Content_And_Updates_Rev()
 		{
-			var docs          = new[] { new DummyCouchModel { Id = Guid.NewGuid() }, new DummyCouchModel { Id = Guid.NewGuid() } };
+			var docs          = new[] { new DummyCouchModel { Id = Guid.NewGuid().ToString() }, new DummyCouchModel { Id = Guid.NewGuid().ToString() } };
 			var couchResponse = new[]
 			{
 				new CouchBulkUpdateResponseItem { Id = docs[0].Id, Ok = true, Rev = "111" },
@@ -1831,8 +1831,13 @@ namespace Edge10.CouchDb.Client.Tests
 			Assert.AreEqual("500 original reason ", requestException.Message);
 		}
 
-		class DummyCouchModel : BaseCouchModel<DummyCouchModel>
+		class DummyCouchModel : CouchModelBase
 		{
+			public DummyCouchModel()
+			{
+				Id = string.Empty;
+			}
+
 			public string Property => "value";
 
 			public StringComparison EnumValue { get; set; }

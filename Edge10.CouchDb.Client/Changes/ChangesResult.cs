@@ -47,6 +47,6 @@ namespace Edge10.CouchDb.Client.Changes
 		/// Gets the results of the _changes query.
 		/// </summary>
 		[JsonProperty("results")]
-		new public List<Change> Results { get; private set; }
+		public new List<Change> Results { get; private set; }
 	}
 }

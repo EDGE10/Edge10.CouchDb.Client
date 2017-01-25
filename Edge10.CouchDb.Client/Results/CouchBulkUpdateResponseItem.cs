@@ -10,7 +10,7 @@ namespace Edge10.CouchDb.Client.Results
 		/// <summary>
 		/// Gets or sets the id of the updated document.
 		/// </summary>
-		public Guid Id { get; set; }
+		public string Id { get; set; }
 
 		/// <summary>
 		/// Gets or sets whether the update was successful or not.

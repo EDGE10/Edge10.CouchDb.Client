@@ -57,8 +57,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TestChangesParameters.cs" />
+    <Compile Include="TestAttachmentsConverter.cs" />
+    <Compile Include="Changes\TestChangesParameters.cs" />
     <Compile Include="TestCouchApi.cs" />
+    <Compile Include="TestCouchDbConnectionStringBuilder.cs" />
     <Compile Include="TestViewParameters.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -339,7 +339,7 @@ namespace Edge10.CouchDb.Client
 		{
 			document.ThrowIfNull(nameof(document));
 
-			document.Id = document.Id == Guid.Empty ? Guid.NewGuid() : document.Id;
+			document.Id = string.IsNullOrWhiteSpace(document.Id) ? Guid.NewGuid().ToString() : document.Id;
 
 			await UpdateDocumentAsync(document);
 		}

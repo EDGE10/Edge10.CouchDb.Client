@@ -1,7 +1,7 @@
 ﻿using Edge10.CouchDb.Client.Changes;
 using NUnit.Framework;
 
-namespace Edge10.CouchDb.Client.Tests
+namespace Edge10.CouchDb.Client.Tests.Changes
 {
 	[TestFixture]
 	public class TestChangesParameters

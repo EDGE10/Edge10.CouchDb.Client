@@ -59,7 +59,7 @@
   <ItemGroup>
     <Compile Include="AttachmentMetaData.cs" />
     <Compile Include="AttachmentsConverter.cs" />
-    <Compile Include="BaseCouchModel.cs" />
+    <Compile Include="CouchModelBase.cs" />
     <Compile Include="Changes\Change.cs" />
     <Compile Include="Changes\ChangeRevision.cs" />
     <Compile Include="Changes\ChangesParameters.cs" />
@@ -79,7 +79,7 @@
     <Compile Include="IViewParameters.cs" />
     <Compile Include="PagedResult.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Results\CiuchUpdateResponse.cs" />
+    <Compile Include="Results\CouchUpdateResponse.cs" />
     <Compile Include="Results\CouchBulkUpdateResponseItem.cs" />
     <Compile Include="Results\ViewResultRow.cs" />
     <Compile Include="Utils\DisposableWrapper.cs" />
