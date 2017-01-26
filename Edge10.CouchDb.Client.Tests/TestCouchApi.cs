@@ -925,7 +925,7 @@ namespace Edge10.CouchDb.Client.Tests
 ""_deleted"":false,
 ""type"":""DummyCouchModel""}";
 
-			Assert.AreEqual(expected.Replace("\r\n", string.Empty), stringContent, "The document content was not correctly passed to the server");
+			Assert.AreEqual(expected.Replace(Environment.NewLine, string.Empty), stringContent, "The document content was not correctly passed to the server");
 
 			//check that the revision and type properties were updated on the original model
 			Assert.AreEqual("new rev", model.Rev, "The Revision should have been updated");
@@ -1022,7 +1022,7 @@ namespace Edge10.CouchDb.Client.Tests
 ""_deleted"":false,
 ""type"":""DummyCouchModel""}";
 
-			Assert.AreEqual(expected.Replace("\r\n", string.Empty), stringContent, "The document content was not correctly passed to the server");
+			Assert.AreEqual(expected.Replace(Environment.NewLine, string.Empty), stringContent, "The document content was not correctly passed to the server");
 
 			//check that the revision was updated on the original
 			Assert.AreEqual("new rev", model.Rev, "The Revision should have been updated");
@@ -1156,7 +1156,7 @@ namespace Edge10.CouchDb.Client.Tests
 ]
 }";
 
-			Assert.AreEqual(expected.Replace("\r\n", string.Empty), stringContent, "The document content was not correctly passed to the server");
+			Assert.AreEqual(expected.Replace(Environment.NewLine, string.Empty), stringContent, "The document content was not correctly passed to the server");
 			Assert.AreEqual("111", docs[0].Rev);
 			Assert.AreEqual("222", docs[1].Rev);
 		}
@@ -1615,7 +1615,7 @@ namespace Edge10.CouchDb.Client.Tests
 ""_deleted"":false,
 ""type"":""DummyCouchModel""}";
 
-			Assert.AreEqual(expected.Replace("\r\n", string.Empty), stringContent,
+			Assert.AreEqual(expected.Replace(Environment.NewLine, string.Empty), stringContent,
 				"The document content should have been serialized using the custom settings (i.e. no $type property)");
 
 			//now make the same call without the settings and check that the $type property comes back
@@ -1627,7 +1627,7 @@ namespace Edge10.CouchDb.Client.Tests
 
 			var stringContentDefault = await content.ReadAsStringAsync();
 
-			Assert.AreEqual(expected.Replace("\r\n", string.Empty), stringContentDefault,
+			Assert.AreEqual(expected.Replace(Environment.NewLine, string.Empty), stringContentDefault,
 				"The document content should have been serialized using the default settings (i.e. $type property present)");
 		}
 
@@ -1665,7 +1665,7 @@ namespace Edge10.CouchDb.Client.Tests
 ""_deleted"":false,
 ""type"":""DummyCouchModel""}";
 
-			Assert.AreEqual(expected.Replace("\r\n", string.Empty), stringContent,
+			Assert.AreEqual(expected.Replace(Environment.NewLine, string.Empty), stringContent,
 				"The document content should have been serialized using the custom settings (i.e. no $type property)");
 
 			//now make the same call without the settings and check that the enum converter
@@ -1679,7 +1679,7 @@ namespace Edge10.CouchDb.Client.Tests
 
 			var stringContentDefault = await content.ReadAsStringAsync();
 
-			Assert.AreEqual(expected.Replace("\r\n", string.Empty), stringContentDefault,
+			Assert.AreEqual(expected.Replace(Environment.NewLine, string.Empty), stringContentDefault,
 				"The document content should have been serialized using the default settings (i.e. $type property present)");
 		}
 
