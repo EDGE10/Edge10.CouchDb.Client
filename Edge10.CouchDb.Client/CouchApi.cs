@@ -356,7 +356,7 @@ namespace Edge10.CouchDb.Client
 
 			document.Type = typeof(TDocument).Name;
 
-			var url      = GetDocumentUrl(document.Id.ToString());
+			var url      = GetDocumentUrl(document.Id);
 			var content  = SerializeDocument(document);
 			var response = await _client.PutAsync(url, content);
 
