@@ -156,9 +156,7 @@ namespace Edge10.CouchDb.Client
 		private string PrepareArrayValue(IEnumerable<object> values)
 		{
 			var valuesArray = values as object[] ?? values.ToArray();
-			var value = valuesArray.Length > 1
-					? JsonConvert.SerializeObject(valuesArray, Formatting.None, new IsoDateTimeConverter())
-					: JsonConvert.SerializeObject(valuesArray[0], Formatting.None, new IsoDateTimeConverter());
+			var value       = JsonConvert.SerializeObject(valuesArray, Formatting.None, new IsoDateTimeConverter());
 			return WebUtility.UrlEncode(value);
 		}
 	}
