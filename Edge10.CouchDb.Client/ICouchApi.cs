@@ -110,7 +110,7 @@ namespace Edge10.CouchDb.Client
 		/// </summary>
 		/// <param name="viewParameters">The view parameters.</param>
 		/// <returns>The IDs of the documents returned by the view.</returns>
-		Task<IEnumerable<Guid>> GetViewDocumentIdsAsync(IViewParameters viewParameters);
+		Task<IEnumerable<string>> GetViewDocumentIdsAsync(IViewParameters viewParameters);
 
 		/// <summary>
 		/// Retrieves the document with the specified <paramref name="documentId"/> then serializes
@@ -231,7 +231,7 @@ namespace Edge10.CouchDb.Client
 		/// <returns>
 		/// The latest revision for each document, or <c>null</c> if no change can be found.
 		/// </returns>
-		Task<IDictionary<Guid, ChangeRevision>> GetLatestDocumentRevisions(IEnumerable<Guid> documentIds);
+		Task<IDictionary<string, ChangeRevision>> GetLatestDocumentRevisions(IEnumerable<string> documentIds);
 
 		/// <summary>
 		/// Executes the specified view and parses the result into <typeparamref name="TResult"/>.

@@ -477,12 +477,12 @@ namespace Edge10.CouchDb.Client
 		/// <returns>
 		/// The latest revision for each document, or <c>null</c> if no change can be found.
 		/// </returns>
-		public async Task<IDictionary<Guid, ChangeRevision>> GetLatestDocumentRevisions(IEnumerable<Guid> documentIds)
+		public async Task<IDictionary<string, ChangeRevision>> GetLatestDocumentRevisions(IEnumerable<string> documentIds)
 		{
 			documentIds.ThrowIfNull(nameof(documentIds));
 
 			var distinctIds = documentIds.Distinct().ToArray();
-			if (!distinctIds.Any()) return new Dictionary<Guid, ChangeRevision>();
+			if (!distinctIds.Any()) return new Dictionary<string, ChangeRevision>();
 
 			var url = $"{_url}/{_databaseName}/_all_docs";
 
@@ -506,7 +506,7 @@ namespace Edge10.CouchDb.Client
 			}
 
 			var idBlocks = SplitToBlocks(distinctIds, MaxDocumentsPerRequest);
-			var results  = new Dictionary<Guid, ChangeRevision>();
+			var results  = new Dictionary<string, ChangeRevision>();
 
 			//note: running these sequentially to avoid multiple
 			//simultaneous threads causing memory problems
@@ -528,7 +528,7 @@ namespace Edge10.CouchDb.Client
 		/// </summary>
 		/// <param name="viewParameters">The view parameters.</param>
 		/// <returns>The IDs of the documents returned by the view.</returns>
-		public async Task<IEnumerable<Guid>> GetViewDocumentIdsAsync(IViewParameters viewParameters)
+		public async Task<IEnumerable<string>> GetViewDocumentIdsAsync(IViewParameters viewParameters)
 		{
 			var viewResult = await GetListResult<ViewResult<object, object>>(viewParameters);
 			return viewResult.Rows.Select(r => r.Id);
