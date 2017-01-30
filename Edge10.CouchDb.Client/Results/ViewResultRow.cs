@@ -17,7 +17,7 @@ namespace Edge10.CouchDb.Client.Results
 		/// The ID.
 		/// </value>
 		[JsonProperty("id")]
-		public Guid Id { get; set; }
+		public string Id { get; set; }
 
 		/// <summary>
 		/// Gets or sets the key that identifies this row.

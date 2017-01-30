@@ -515,9 +515,9 @@ namespace Edge10.CouchDb.Client.Tests
 			SetupViewParameters(out viewParameters, out expectedUrl);
 
 			var data = new[] {
-				Guid.NewGuid(),
-				Guid.NewGuid(),
-				Guid.NewGuid(),
+				Guid.NewGuid().ToString(),
+				Guid.NewGuid().ToString(),
+				Guid.NewGuid().ToString(),
 			};
 			var couchResult = new ViewResult<string, object> { TotalRows = data.Length };
 
@@ -1430,7 +1430,7 @@ namespace Edge10.CouchDb.Client.Tests
 		[Test]
 		public async Task GetLatestDocumentRevisions_Ignores_Empty_Array()
 		{
-			var result = await _couchApi.GetLatestDocumentRevisions(Enumerable.Empty<Guid>());
+			var result = await _couchApi.GetLatestDocumentRevisions(Enumerable.Empty<string>());
 			Assert.AreEqual(0, result.Count, "No results should be returned");
 			_httpClient.Verify(c => c.PostAsync(
 				It.IsAny<string>(),
@@ -1441,8 +1441,8 @@ namespace Edge10.CouchDb.Client.Tests
 		public async Task GetLatestDocumentRevisions_Returns_Documents_From_Server()
 		{
 			//two unique ids, another one that won't be returned from the request and one duplicate
-			var duplicateId = Guid.NewGuid();
-			var ids         = new[] { Guid.NewGuid(), duplicateId, Guid.NewGuid(), duplicateId };
+			var duplicateId = Guid.NewGuid().ToString();
+			var ids         = new[] { Guid.NewGuid().ToString(), duplicateId, Guid.NewGuid().ToString(), duplicateId };
 			var expectedUrl = "https://server:1234/database/_all_docs";
 
 			var changes = new ViewResult<object, ChangeRevision>();
@@ -1488,8 +1488,8 @@ namespace Edge10.CouchDb.Client.Tests
 		public async Task GetLatestDocumentRevisions_Splits_Large_Requests_Into_Packets()
 		{
 			//three unique ids, another one that won't be returned from the request and one duplicate
-			var duplicateId = Guid.NewGuid();
-			var ids         = new[] { Guid.NewGuid(), Guid.NewGuid(), duplicateId, Guid.NewGuid(), duplicateId };
+			var duplicateId = Guid.NewGuid().ToString();
+			var ids         = new[] { Guid.NewGuid().ToString(), Guid.NewGuid().ToString(), duplicateId, Guid.NewGuid().ToString(), duplicateId };
 			var expectedUrl = "https://server:1234/database/_all_docs";
 
 			var packet1Changes = new ViewResult<object, ChangeRevision>();
