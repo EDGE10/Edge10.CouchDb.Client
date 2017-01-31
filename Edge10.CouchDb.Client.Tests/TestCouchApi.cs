@@ -965,7 +965,7 @@ namespace Edge10.CouchDb.Client.Tests
 		[Test]
 		public void UpdateDocumentAsync_Rethrows_Http_Exceptions()
 		{
-			var model = new DummyCouchModel { Id = Guid.NewGuid().ToString() };
+			var model = new DummyCouchModel { Id = Guid.NewGuid().ToString(), Rev = "123" };
 
 			//setup a PUT call that returns a failure code
 			_httpClient.Setup(c => c.PutAsync(GetDocumentUri(model.Id.ToString()), It.IsAny<HttpContent>()))
@@ -979,7 +979,7 @@ namespace Edge10.CouchDb.Client.Tests
 		[Test]
 		public void UpdateDocumentAsync_Throws_ConflictException_For_Conflict_StatusCode()
 		{
-			var model = new DummyCouchModel { Id = Guid.NewGuid().ToString() };
+			var model = new DummyCouchModel { Id = Guid.NewGuid().ToString(), Rev = "123" };
 
 			//setup a PUT call that returns a failure code
 			_httpClient.Setup(c => c.PutAsync(GetDocumentUri(model.Id.ToString()), It.IsAny<HttpContent>()))
@@ -1018,6 +1018,49 @@ namespace Edge10.CouchDb.Client.Tests
 ""enumValue"":0,
 ""_id"":""" + model.Id + @""",
 ""_rev"":""123"",
+""_attachments"":{},
+""_deleted"":false,
+""type"":""DummyCouchModel""}";
+
+			Assert.AreEqual(expected.Replace("\r\n", string.Empty).Replace("\n", string.Empty), stringContent, "The document content was not correctly passed to the server");
+
+			//check that the revision was updated on the original
+			Assert.AreEqual("new rev", model.Rev, "The Revision should have been updated");
+		}
+
+		[Test]
+		public async Task UpdateDocumentsAsync_Gets_Rev_For_Updated_Object()
+		{
+			var revision                     = "latest-rev";
+			var model                        = new DummyCouchModel { Id = Guid.NewGuid().ToString() };
+			var httpResponseMessage          = new HttpResponseMessage(HttpStatusCode.OK);
+			httpResponseMessage.Headers.ETag = new EntityTagHeaderValue(QuoteString(revision));
+
+			SetSendHeadAsyncOnHttpClientFacade(GetDocumentUri(model.Id), httpResponseMessage);
+
+			//create a server response
+			var couchResponse = new CouchUpdateResponse { Rev = "new rev" };
+			var response      = new HttpResponseMessage(HttpStatusCode.OK)
+			{
+				Content = new StringContent(JsonConvert.SerializeObject(couchResponse))
+			};
+
+			//setup a PUT call that returns a success call and records the content
+			HttpContent content = null;
+			_httpClient.Setup(c => c.PutAsync(GetDocumentUri(model.Id.ToString()), It.IsAny<HttpContent>()))
+				.ReturnsAsync(response)
+				.Callback<string, HttpContent>((_, c) => content = c);
+
+			//make the call and check the content passed to the server
+			await _couchApi.UpdateDocumentAsync(model);
+			Assert.IsNotNull(content, "Content should have been passed to the server");
+			var stringContent = await content.ReadAsStringAsync();
+			var expected = @"{
+""$type"":""Edge10.CouchDb.Client.Tests.TestCouchApi+DummyCouchModel, Edge10.CouchDb.Client.Tests"",
+""property"":""value"",
+""enumValue"":0,
+""_id"":""" + model.Id + @""",
+""_rev"":""" + revision + @""",
 ""_attachments"":{},
 ""_deleted"":false,
 ""type"":""DummyCouchModel""}";

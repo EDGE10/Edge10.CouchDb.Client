@@ -334,14 +334,14 @@ namespace Edge10.CouchDb.Client
 		/// <typeparam name="TDocument"></typeparam>
 		/// <param name="document"></param>
 		/// <returns></returns>
-		public async Task CreateDocumentAsync<TDocument>(TDocument document)
+		public Task CreateDocumentAsync<TDocument>(TDocument document)
 			where TDocument : ICouchModel
 		{
 			document.ThrowIfNull(nameof(document));
 
 			document.Id = string.IsNullOrWhiteSpace(document.Id) ? Guid.NewGuid().ToString() : document.Id;
 
-			await UpdateDocumentAsync(document);
+			return UpdateOrCreateDocumentAsync(document, true);
 		}
 
 		/// <summary>
@@ -349,16 +349,27 @@ namespace Edge10.CouchDb.Client
 		/// </summary>
 		/// <typeparam name="TDocument">The type of the document</typeparam>
 		/// <param name="document">The updated document content.</param>
-		public async Task UpdateDocumentAsync<TDocument>(TDocument document)
+		public Task UpdateDocumentAsync<TDocument>(TDocument document)
+			where TDocument : ICouchModel
+		{
+			return UpdateOrCreateDocumentAsync(document, false);
+		}
+
+		private async Task UpdateOrCreateDocumentAsync<TDocument>(TDocument document, bool isNew)
 			where TDocument : ICouchModel
 		{
 			document.ThrowIfNull(nameof(document));
+			var documentUri = GetDocumentUrl(document.Id);
+			if (!isNew && string.IsNullOrWhiteSpace(document.Rev))
+			{
+				var revision = await GetDocumentRevision(documentUri);
+				document.Rev = revision;
+			}
 
 			document.Type = typeof(TDocument).Name;
 
-			var url      = GetDocumentUrl(document.Id);
 			var content  = SerializeDocument(document);
-			var response = await _client.PutAsync(url, content);
+			var response = await _client.PutAsync(documentUri, content);
 
 			if (response.StatusCode == HttpStatusCode.Conflict)
 				throw new ConflictException();
