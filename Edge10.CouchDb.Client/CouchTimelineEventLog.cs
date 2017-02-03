@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using Edge10.CouchDb.Client.Utils;
@@ -47,12 +48,13 @@ namespace Edge10.CouchDb.Client
 
 		private IDisposable Time(string eventName, string eventSubText)
 		{
-			var start = DateTime.UtcNow;
+			var stopWatch = new Stopwatch();
+			stopWatch.Start();
 
 			return new DisposableWrapper<object>(null, () =>
 			{
-				var end = DateTime.UtcNow;
-				_log.Debug($"Couch event: {eventName}, details: {eventSubText}, duration: {end - start}");
+				stopWatch.Stop();
+				_log.Debug($"Couch event: {eventName}, details: {eventSubText}, duration: {stopWatch.Elapsed}");
 			});
 		}
 	}
