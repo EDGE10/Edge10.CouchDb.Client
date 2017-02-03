@@ -38,14 +38,14 @@ namespace Edge10.CouchDb.Client.Tests
 			_httpClient.Setup(hc => hc.SetAuthorizationHeader(It.IsAny<AuthenticationHeaderValue>()))
 				.Callback<AuthenticationHeaderValue>(CheckHeader);
 
-			_couchApi =  new CouchApi(_connectionString, _httpClient.Object, _couchEventLog.Object);
+			_couchApi =  new CouchApi(_connectionString, _httpClient.Object, _couchEventLog.Object, null);
 		}
 
 		[Test]
 		public void Constructor_Throws_Exception_On_Null_Parameters()
 		{
-			Assert.Throws<ArgumentNullException>(() => new CouchApi(null, _httpClient.Object, _couchEventLog.Object));
-			Assert.Throws<ArgumentNullException>(() => new CouchApi(_connectionString, null, _couchEventLog.Object));
+			Assert.Throws<ArgumentNullException>(() => new CouchApi(null, _httpClient.Object, _couchEventLog.Object, null));
+			Assert.Throws<ArgumentNullException>(() => new CouchApi(_connectionString, null, _couchEventLog.Object, null));
 			Assert.Throws<ArgumentNullException>(() => new CouchApi(null));
 		}
 
@@ -1735,6 +1735,50 @@ namespace Edge10.CouchDb.Client.Tests
 				"The document content should have been serialized using the default settings (i.e. $type property present)");
 		}
 
+		[Test]
+		public async Task GetDocumentAsync_Uses_Custom_Reader_If_Specified()
+		{
+			var strategy     = new SerializationStrategy(x => new CustomStreamReader(x), x => new CustomStringWriter(x));
+			var api          = new CouchApi(_connectionString, _httpClient.Object, _couchEventLog.Object, strategy);
+			var expectedUrl  = "https://server:1234/database/document";
+			var response     = new HttpResponseMessage(HttpStatusCode.OK)
+			{
+				Content = new StringContent(@"{_id:""123"",_rev:""456""}")
+			};
+
+			//setup a successful HTTP call
+			_httpClient.Setup(c => c.GetAsync(expectedUrl))
+				.ReturnsAsync(response);
+
+			var document = await api.GetDocumentAsync<DummyCouchModel>("document");
+			Assert.AreEqual("123", document.Id);
+			Assert.AreEqual("456", document.Rev);
+			Assert.IsTrue(CustomStreamReader.WasReadCalled);
+		}
+
+		[Test]
+		public async Task Create_Uses_Custom_Writer_If_Specified()
+		{
+			var strategy = new SerializationStrategy(x => new CustomStreamReader(x), x => new CustomStringWriter(x));
+			var api      = new CouchApi(_connectionString, _httpClient.Object, _couchEventLog.Object, strategy);
+			var id       = Guid.NewGuid().ToString();
+			var model    = new DummyCouchModel { Id = id };
+
+			var couchResponse = new CouchUpdateResponse { Rev = "new rev" };
+			var response      = new HttpResponseMessage(HttpStatusCode.OK)
+			{
+				Content = new StringContent(JsonConvert.SerializeObject(couchResponse))
+			};
+
+			_httpClient.Setup(c => c.PutAsync(GetDocumentUri(id.ToString()), It.IsAny<HttpContent>()))
+				.ReturnsAsync(response);
+
+			await api.CreateDocumentAsync(model);
+
+			Assert.AreEqual(id, model.Id, "The ID should not have been changed");
+			Assert.IsTrue(CustomStringWriter.WasWriteCalled);
+		}
+
 		private string QuoteString(string str)
 		{
 			return $"\"{str}\"";
@@ -1753,7 +1797,7 @@ namespace Edge10.CouchDb.Client.Tests
 		{
 			var connectionString    = CreateConnectionString();
 			connectionString.Server = server;
-			var api                 = new CouchApi(connectionString, _httpClient.Object, _couchEventLog.Object);
+			var api                 = new CouchApi(connectionString, _httpClient.Object, _couchEventLog.Object, null);
 
 			//setup call to the HTTP client
 			_httpClient.Setup(hc => hc.GetAsync(expectedUrl, HttpCompletionOption.ResponseHeadersRead))
@@ -1893,6 +1937,38 @@ namespace Edge10.CouchDb.Client.Tests
 			public string Property => "value";
 
 			public StringComparison EnumValue { get; set; }
+		}
+
+		class CustomStreamReader : StreamReader
+		{
+			public CustomStreamReader(Stream stream) : base(stream)
+			{
+				WasReadCalled = false;
+			}
+
+			public override int Read(char[] buffer, int index, int count)
+			{
+				WasReadCalled = true;
+				return base.Read(buffer, index, count);
+			}
+
+			public static bool WasReadCalled { get; set; }
+		}
+
+		public class CustomStringWriter : StringWriter
+		{
+			public CustomStringWriter(StringBuilder sb) : base(sb)
+			{
+				WasWriteCalled = false;
+			}
+
+			public override void Write(char value)
+			{
+				WasWriteCalled = true;
+				base.Write(value);
+			}
+
+			public static bool WasWriteCalled { get; set; }
 		}
 	}
 }
