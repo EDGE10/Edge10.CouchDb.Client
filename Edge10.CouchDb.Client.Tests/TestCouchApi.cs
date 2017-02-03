@@ -25,25 +25,27 @@ namespace Edge10.CouchDb.Client.Tests
 		private CouchApi _couchApi;
 		private ICouchDbConnectionStringBuilder _connectionString;
 		private Mock<IHttpClientFacade> _httpClient;
+		private Mock<ICouchEventLog> _couchEventLog;
 
 		[SetUp]
 		public void Init()
 		{
 			_connectionString = CreateConnectionString();
 			_httpClient       = new Mock<IHttpClientFacade>();
+			_couchEventLog    = new Mock<ICouchEventLog>();
 
 			//check that the constructor sets the auth header
 			_httpClient.Setup(hc => hc.SetAuthorizationHeader(It.IsAny<AuthenticationHeaderValue>()))
 				.Callback<AuthenticationHeaderValue>(CheckHeader);
 
-			_couchApi =  new CouchApi(_connectionString, _httpClient.Object);
+			_couchApi =  new CouchApi(_connectionString, _httpClient.Object, _couchEventLog.Object);
 		}
 
 		[Test]
 		public void Constructor_Throws_Exception_On_Null_Parameters()
 		{
-			Assert.Throws<ArgumentNullException>(() => new CouchApi(null, _httpClient.Object));
-			Assert.Throws<ArgumentNullException>(() => new CouchApi(_connectionString, null));
+			Assert.Throws<ArgumentNullException>(() => new CouchApi(null, _httpClient.Object, _couchEventLog.Object));
+			Assert.Throws<ArgumentNullException>(() => new CouchApi(_connectionString, null, _couchEventLog.Object));
 			Assert.Throws<ArgumentNullException>(() => new CouchApi(null));
 		}
 
@@ -639,6 +641,7 @@ namespace Edge10.CouchDb.Client.Tests
 
 			var document = await _couchApi.TryGetDocumentAsync<string>("document");
 			Assert.IsNull(document);
+			_couchEventLog.Verify(x => x.LogDocumentEvent("document", "get"));
 		}
 
 		[Test]
@@ -815,6 +818,7 @@ namespace Edge10.CouchDb.Client.Tests
 
 			var result = await _couchApi.DocumentExistsAsync(documentID);
 			Assert.IsFalse(result, "Document shouldn't exist");
+			_couchEventLog.Verify(x => x.LogDocumentEvent(documentID, "get"));
 		}
 
 		[Test]
@@ -954,6 +958,7 @@ namespace Edge10.CouchDb.Client.Tests
 
 			//ensure the id wasn't changed
 			Assert.AreEqual(id, model.Id, "The ID should not have been changed");
+			_couchEventLog.Verify(x => x.LogDocumentEvent(id, "create"));
 		}
 
 		[Test]
@@ -1026,6 +1031,7 @@ namespace Edge10.CouchDb.Client.Tests
 
 			//check that the revision was updated on the original
 			Assert.AreEqual("new rev", model.Rev, "The Revision should have been updated");
+			_couchEventLog.Verify(x => x.LogDocumentEvent(model.Id, "update"));
 		}
 
 		[Test]
@@ -1202,6 +1208,7 @@ namespace Edge10.CouchDb.Client.Tests
 			Assert.AreEqual(expected.Replace("\r\n", string.Empty).Replace("\n", string.Empty), stringContent, "The document content was not correctly passed to the server");
 			Assert.AreEqual("111", docs[0].Rev);
 			Assert.AreEqual("222", docs[1].Rev);
+			_couchEventLog.Verify(x => x.LogDocumentEvent($"{docs[0].Id}, {docs[1].Id}", "bulk"));
 		}
 
 		[Test]
@@ -1462,6 +1469,7 @@ namespace Edge10.CouchDb.Client.Tests
 			//make the call and check the result
 			var result = await _couchApi.GetLatestDocumentRevision("docid");
 			Assert.AreEqual(changes.Rows.ElementAt(0).Value.Revision, result.Revision);
+			_couchEventLog.Verify(x => x.LogDocumentEvent("docid", "get"));
 		}
 
 		[Test]
@@ -1619,6 +1627,7 @@ namespace Edge10.CouchDb.Client.Tests
 				new[] { "one", "two", "three", "with _id", "with _rev" },
 				result,
 				"Data should have been serialized");
+			_couchEventLog.Verify(x => x.LogViewEvent(viewParameters));
 		}
 
 		[Test]
@@ -1744,7 +1753,7 @@ namespace Edge10.CouchDb.Client.Tests
 		{
 			var connectionString    = CreateConnectionString();
 			connectionString.Server = server;
-			var api                 = new CouchApi(connectionString, _httpClient.Object);
+			var api                 = new CouchApi(connectionString, _httpClient.Object, _couchEventLog.Object);
 
 			//setup call to the HTTP client
 			_httpClient.Setup(hc => hc.GetAsync(expectedUrl, HttpCompletionOption.ResponseHeadersRead))

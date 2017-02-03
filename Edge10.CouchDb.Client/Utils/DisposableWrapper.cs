@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Edge10.CouchDb.Client.Utils
 {
@@ -16,6 +15,11 @@ namespace Edge10.CouchDb.Client.Utils
 		}
 
 		public T Value { get; private set; }
+
+		/// <summary>
+		/// A "do nothing" instance.
+		/// </summary>
+		public static IDisposable NoOp { get; } = new DisposableWrapper<T>(default(T), () => { });
 
 		public void Dispose()
 		{

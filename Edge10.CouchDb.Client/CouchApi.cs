@@ -25,6 +25,7 @@ namespace Edge10.CouchDb.Client
 	public sealed class CouchApi : ICouchApi
 	{
 		private IHttpClientFacade _client;
+		private readonly ICouchEventLog _eventLog;
 		private readonly string _url;
 		private readonly string _databaseName;
 		private Action<JsonSerializerSettings> _settingsChanges;
@@ -33,7 +34,8 @@ namespace Edge10.CouchDb.Client
 		/// Initializes a new instance of the <see cref="CouchApi" /> class.
 		/// </summary>
 		/// <param name="connectionString">The connection string.</param>
-		public CouchApi(ICouchDbConnectionStringBuilder connectionString) : this(connectionString, new HttpClientFacade(new HttpClientHandler()))
+		/// <param name="eventLog">The couch event log</param>
+		public CouchApi(ICouchDbConnectionStringBuilder connectionString, ICouchEventLog eventLog = null) : this(connectionString, new HttpClientFacade(new HttpClientHandler()), eventLog ?? NullCouchEventLog.Instance)
 		{
 		}
 
@@ -42,12 +44,15 @@ namespace Edge10.CouchDb.Client
 		/// </summary>
 		/// <param name="connectionString">The connection string.</param>
 		/// <param name="httpClient">The HTTP client facade.</param>
-		internal CouchApi(ICouchDbConnectionStringBuilder connectionString, IHttpClientFacade httpClient)
+		/// <param name="eventLog">The couch event log.</param>
+		internal CouchApi(ICouchDbConnectionStringBuilder connectionString, IHttpClientFacade httpClient, ICouchEventLog eventLog)
 		{
 			connectionString.ThrowIfNull(nameof(connectionString));
 			httpClient.ThrowIfNull(nameof(httpClient));
+			eventLog.ThrowIfNull(nameof(eventLog));
 
 			_client         = httpClient;
+			_eventLog       = eventLog;
 			_databaseName   = connectionString.DatabaseName;
 			_url            = GetServerUrl(connectionString);
 			_client.Timeout = TimeSpan.FromMinutes(20);
@@ -233,6 +238,7 @@ namespace Edge10.CouchDb.Client
 			documentId.ThrowIfNullOrEmpty(nameof(documentId));
 			var url = GetDocumentUrl(documentId);
 
+			using (_eventLog.LogDocumentEvent(documentId, "get"))
 			using (var result = await _client.GetAsync(url))
 				return await GetSerializedResultContent<TDocument>(result);
 		}
@@ -253,6 +259,7 @@ namespace Edge10.CouchDb.Client
 			revision.ThrowIfNullOrEmpty(nameof(revision));
 
 			var url = GetDocumentUrl(documentId, revision);
+			using (_eventLog.LogDocumentEvent(documentId, "get"))
 			using (var result = await _client.GetAsync(url))
 				return await GetSerializedResultContent<TDocument>(result);
 		}
@@ -269,6 +276,7 @@ namespace Edge10.CouchDb.Client
 			documentId.ThrowIfNullOrEmpty(nameof(documentId));
 
 			var url = GetDocumentUrl(documentId);
+			using (_eventLog.LogDocumentEvent(documentId, "get"))
 			using (var result = await _client.GetAsync(url))
 			{
 				if (!result.IsSuccessStatusCode)
@@ -309,9 +317,12 @@ namespace Edge10.CouchDb.Client
 		{
 			documentId.ThrowIfNullOrEmpty(nameof(documentId));
 
-			var httpResponse = await _client.GetAsync(GetDocumentUrl(documentId));
-			if (httpResponse == null) return false;
-			return httpResponse.IsSuccessStatusCode;
+			using (_eventLog.LogDocumentEvent(documentId, "get"))
+			{
+				var httpResponse = await _client.GetAsync(GetDocumentUrl(documentId));
+				if (httpResponse == null) return false;
+				return httpResponse.IsSuccessStatusCode;
+			}
 		}
 
 		/// <summary>
@@ -322,10 +333,13 @@ namespace Edge10.CouchDb.Client
 		{
 			documentId.ThrowIfNullOrEmpty(nameof(documentId));
 
-			var httpResponse = await _client.PutAsync(GetDocumentUrl(documentId),
-				new StringContent("{}", Encoding.UTF8, "application/json"));
+			using (_eventLog.LogDocumentEvent(documentId, "create"))
+			{
+				var httpResponse = await _client.PutAsync(GetDocumentUrl(documentId),
+														  new StringContent("{}", Encoding.UTF8, "application/json"));
 
-			await httpResponse.ThrowErrorIfNotSuccess();
+				await httpResponse.ThrowErrorIfNotSuccess();
+			}
 		}
 
 		/// <summary>
@@ -341,7 +355,8 @@ namespace Edge10.CouchDb.Client
 
 			document.Id = string.IsNullOrWhiteSpace(document.Id) ? Guid.NewGuid().ToString() : document.Id;
 
-			return UpdateOrCreateDocumentAsync(document, true);
+			using (_eventLog.LogDocumentEvent(document.Id, "create"))
+				return UpdateOrCreateDocumentAsync(document, true);
 		}
 
 		/// <summary>
@@ -352,7 +367,10 @@ namespace Edge10.CouchDb.Client
 		public Task UpdateDocumentAsync<TDocument>(TDocument document)
 			where TDocument : ICouchModel
 		{
-			return UpdateOrCreateDocumentAsync(document, false);
+			document.ThrowIfNull(nameof(document));
+
+			using (_eventLog.LogDocumentEvent(document.Id, "update"))
+				return UpdateOrCreateDocumentAsync(document, false);
 		}
 
 		private async Task UpdateOrCreateDocumentAsync<TDocument>(TDocument document, bool isNew)
@@ -394,30 +412,33 @@ namespace Edge10.CouchDb.Client
 				document.Type = typeof(TDocument).Name;
 			}
 
-			var url      = $"{_url}/{_databaseName}/_bulk_docs";
-			var content  = SerializeDocument(new { Docs = docsArray });
-			var response = await _client.PostAsync(url, content);
-
-			await response.ThrowErrorIfNotSuccess();
-
-			var responseContent = await response.Content.ReadAsStringAsync();
-			var updateResults   = JsonConvert.DeserializeObject<CouchBulkUpdateResponseItem[]>(responseContent);
-
-			var conflictIds = updateResults.Where(x => x.Error == "conflict").Select(x => x.Id.ToString()).ToArray();
-			if (conflictIds.Any())
-				throw new ConflictException(string.Join(", ", conflictIds));
-
-			var errorResults = updateResults.Where(x => !x.Ok && !string.IsNullOrWhiteSpace(x.Error)).ToArray();
-			if (errorResults.Any())
+			using (_eventLog.LogDocumentEvent(string.Join(", ", docsArray.Select(x => x.Id.ToString())), "bulk"))
 			{
-				var messages = errorResults.Select(x => $"id: {x.Id}, error: {x.Error}, reason: {x.Reason}");
-				throw new HttpRequestException(string.Join("; ", messages));
-			}
+				var url      = $"{_url}/{_databaseName}/_bulk_docs";
+				var content  = SerializeDocument(new { Docs = docsArray });
+				var response = await _client.PostAsync(url, content);
 
-			var revisionsById = updateResults.ToDictionary(x => x.Id, x => x.Rev);
-			foreach (var document in docsArray)
-			{
-				document.Rev = revisionsById[document.Id];
+				await response.ThrowErrorIfNotSuccess();
+
+				var responseContent = await response.Content.ReadAsStringAsync();
+				var updateResults   = JsonConvert.DeserializeObject<CouchBulkUpdateResponseItem[]>(responseContent);
+
+				var conflictIds = updateResults.Where(x => x.Error == "conflict").Select(x => x.Id.ToString()).ToArray();
+				if (conflictIds.Any())
+					throw new ConflictException(string.Join(", ", conflictIds));
+
+				var errorResults = updateResults.Where(x => !x.Ok && !string.IsNullOrWhiteSpace(x.Error)).ToArray();
+				if (errorResults.Any())
+				{
+					var messages = errorResults.Select(x => $"id: {x.Id}, error: {x.Error}, reason: {x.Reason}");
+					throw new HttpRequestException(string.Join("; ", messages));
+				}
+
+				var revisionsById = updateResults.ToDictionary(x => x.Id, x => x.Rev);
+				foreach (var document in docsArray)
+				{
+					document.Rev = revisionsById[document.Id];
+				}
 			}
 		}
 
@@ -474,6 +495,7 @@ namespace Edge10.CouchDb.Client
 
 			var url = $"{_url}/{_databaseName}/_all_docs?keys=[%22{documentId}%22]";
 
+			using (_eventLog.LogDocumentEvent(documentId, "get"))
 			using (var response = await _client.GetAsync(url))
 			{
 				var viewResult = await GetSerializedResultContent<ViewResult<object, ChangeRevision>>(response);
@@ -618,8 +640,11 @@ namespace Edge10.CouchDb.Client
 		{
 			viewParameters.ThrowIfNull(nameof(viewParameters));
 
-			var result = await GetViewHttpResponse(viewParameters);
-			return GetSerializedContent<TResult>(result);
+			using (_eventLog.LogViewEvent(viewParameters))
+			{
+				var result = await GetViewHttpResponse(viewParameters);
+				return GetSerializedContent<TResult>(result);
+			}
 		}
 
 		/// <summary>

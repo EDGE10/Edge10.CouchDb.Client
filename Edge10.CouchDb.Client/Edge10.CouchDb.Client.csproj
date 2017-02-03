@@ -30,6 +30,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="log4net, Version=2.0.7.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
+      <HintPath>..\packages\log4net.2.0.7\lib\net45-full\log4net.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
@@ -67,16 +71,19 @@
     <Compile Include="CouchApi.cs" />
     <Compile Include="CouchDbConnectionStringBuilder.cs" />
     <Compile Include="CouchQueryParametersBase.cs" />
+    <Compile Include="CouchTimelineEventLog.cs" />
     <Compile Include="Exceptions\ConflictException.cs" />
     <Compile Include="Exceptions\CouchTimeoutException.cs" />
     <Compile Include="IAttachmentMetaData.cs" />
     <Compile Include="Changes\IChangesParameters.cs" />
     <Compile Include="ICouchApi.cs" />
     <Compile Include="ICouchDbConnectionStringBuilder.cs" />
+    <Compile Include="ICouchEventLog.cs" />
     <Compile Include="ICouchModel.cs" />
     <Compile Include="ICouchQueryParameters.cs" />
     <Compile Include="IPagedResult.cs" />
     <Compile Include="IViewParameters.cs" />
+    <Compile Include="NullCouchEventLog.cs" />
     <Compile Include="PagedResult.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Results\CouchUpdateResponse.cs" />
