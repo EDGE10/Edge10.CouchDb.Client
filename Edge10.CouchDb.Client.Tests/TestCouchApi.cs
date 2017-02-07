@@ -1757,6 +1757,163 @@ namespace Edge10.CouchDb.Client.Tests
 		}
 
 		[Test]
+		public async Task GetViewRowsAsync_Uses_Custom_Reader_If_Specified()
+		{
+			var strategy = new SerializationStrategy(x => new CustomStreamReader(x), x => new CustomStringWriter(x));
+			var api      = new CouchApi(_connectionString, _httpClient.Object, _couchEventLog.Object, strategy);
+			IViewParameters viewParameters;
+			string expectedUrl;
+			SetupViewParameters(out viewParameters, out expectedUrl, false);
+			viewParameters.IncludeDocs = true;
+
+			var data = new[] {
+				"one", "two", "three", "with _id", "with _rev"
+			};
+
+			var stream = CreateStreamWithContent(CreateViewResultWithRows(data));
+
+			_httpClient.Setup(c => c.GetStreamAsync(expectedUrl))
+				.ReturnsAsync(stream);
+
+			var result = await api.GetViewRowsAsync<string>(viewParameters);
+			Assert.AreEqual(
+				new[] { "one", "two", "three", "with _id", "with _rev" },
+				result,
+				"Data should have been serialized");
+			Assert.IsTrue(CustomStreamReader.WasReadCalled);
+		}
+
+		[Test]
+		public async Task GetViewDocumentsAsync_Uses_Custom_Reader_If_Specified()
+		{
+			var strategy = new SerializationStrategy(x => new CustomStreamReader(x), x => new CustomStringWriter(x));
+			var api      = new CouchApi(_connectionString, _httpClient.Object, _couchEventLog.Object, strategy);
+			IViewParameters viewParameters;
+			string expectedUrl;
+			SetupViewParameters(out viewParameters, out expectedUrl);
+
+			var data = new[] {
+				"one", "two", "three", "with _id", "with _rev"
+			};
+
+			var stream = CreateStreamWithContent(CreateViewResultWithDocuments(data));
+
+			_httpClient.Setup(c => c.GetStreamAsync(expectedUrl))
+				.ReturnsAsync(stream);
+
+			var result = await api.GetViewDocumentsAsync<string>(viewParameters);
+			Assert.AreEqual(
+				new[] { "one", "two", "three", "with _id", "with _rev" },
+				result.ToList(),
+				"Data should have been serialized");
+			Assert.IsTrue(CustomStreamReader.WasReadCalled);
+		}
+
+		[Test]
+		public async Task GetPagedViewDocumentsAsync_Uses_Custom_Reader_If_Specified()
+		{
+			var strategy = new SerializationStrategy(x => new CustomStreamReader(x), x => new CustomStringWriter(x));
+			var api      = new CouchApi(_connectionString, _httpClient.Object, _couchEventLog.Object, strategy);
+			IViewParameters viewParameters;
+			string expectedUrl;
+			SetupViewParameters(out viewParameters, out expectedUrl, expectReduce: false);
+
+			var data = new[] {
+				"one", "two", "three", "with _id", "with _rev"
+			};
+
+			var stream = CreateStreamWithContent(CreateViewResultWithDocuments(data));
+			var countStream = CreateStreamWithContent(CreateViewResultWithRows(10));
+
+			_httpClient.Setup(c => c.GetStreamAsync(expectedUrl))
+				.ReturnsAsync(stream);
+			const string countUrl = "https://server:1234/database/_design/design/_view/view?include_docs=false&reduce=true";
+			_httpClient.Setup(c => c.GetStreamAsync(countUrl))
+				.ReturnsAsync(countStream);
+
+			var result = await api.GetPagedViewDocumentsAsync<string>(viewParameters);
+			Assert.AreEqual(
+				new[] { "one", "two", "three", "with _id", "with _rev" },
+				result.Rows);
+			Assert.AreEqual(10, result.TotalRows);
+			Assert.IsTrue(CustomStreamReader.WasReadCalled);
+		}
+
+		[Test]
+		public async Task GetDocumentsAsync_Uses_Custom_Reader_If_Specified()
+		{
+			var strategy    = new SerializationStrategy(x => new CustomStreamReader(x), x => new CustomStringWriter(x));
+			var api         = new CouchApi(_connectionString, _httpClient.Object, _couchEventLog.Object, strategy);
+			var ids         = new[] { Guid.NewGuid().ToString(), Guid.NewGuid().ToString() };
+			var expectedUrl = "https://server:1234/database/_all_docs?include_docs=true";
+			var response    = new HttpResponseMessage(HttpStatusCode.OK)
+			{
+				Content = new StringContent(JsonConvert.SerializeObject(new
+				{
+					rows = new[]
+					{
+						new
+						{
+							doc = new
+							{
+								_id = ids[0],
+								_rev = "rev1",
+							}
+						},
+						new
+						{
+							doc = new
+							{
+								_id = ids[1],
+								_rev = "rev2",
+							}
+						},
+					}
+				}))
+			};
+
+			//setup a successful HTTP call
+			string actualContent = null;
+			_httpClient.Setup(c => c.PostAsync(expectedUrl,
+				It.IsAny<HttpContent>()))
+				.ReturnsAsync(response)
+				.Callback<string, HttpContent>((_, content) => actualContent = content.ReadAsStringAsync().Result);
+
+			var documents = await api.GetDocumentsAsync<DummyCouchModel>(ids.Select(i => i.ToString()));
+
+			//check the content passed to the client
+			Assert.IsNotNull(actualContent, "Content should have been included in the request");
+			Assert.AreEqual(
+				JsonConvert.SerializeObject(new { keys = ids }),
+				actualContent,
+				"The serialized IDs should have been included in the request");
+
+			Assert.AreEqual(2, documents.Count(), "2 documents should be returned");
+			Assert.IsTrue(CustomStreamReader.WasReadCalled);
+		}
+
+		[Test]
+		public async Task TryGetDocumentAsync_Uses_Custom_Reader_If_Specified()
+		{
+			var strategy = new SerializationStrategy(x => new CustomStreamReader(x), x => new CustomStringWriter(x));
+			var api = new CouchApi(_connectionString, _httpClient.Object, _couchEventLog.Object, strategy);
+			var expectedUrl = "https://server:1234/database/document";
+			var response = new HttpResponseMessage(HttpStatusCode.OK)
+			{
+				Content = new StringContent(@"{_id:""123"",_rev:""456""}")
+			};
+
+			//setup a successful HTTP call
+			_httpClient.Setup(c => c.GetAsync(expectedUrl))
+				.ReturnsAsync(response);
+
+			var document = await api.TryGetDocumentAsync<DummyCouchModel>("document");
+			Assert.AreEqual("123", document.Id);
+			Assert.AreEqual("456", document.Rev);
+			Assert.IsTrue(CustomStreamReader.WasReadCalled);
+		}
+
+		[Test]
 		public async Task Create_Uses_Custom_Writer_If_Specified()
 		{
 			var strategy = new SerializationStrategy(x => new CustomStreamReader(x), x => new CustomStringWriter(x));
@@ -1776,6 +1933,99 @@ namespace Edge10.CouchDb.Client.Tests
 			await api.CreateDocumentAsync(model);
 
 			Assert.AreEqual(id, model.Id, "The ID should not have been changed");
+			Assert.IsTrue(CustomStringWriter.WasWriteCalled);
+		}
+
+		[Test]
+		public async Task UpdateDocumentAsync_Uses_Custom_Writer_If_Specified()
+		{
+			var strategy = new SerializationStrategy(x => new CustomStreamReader(x), x => new CustomStringWriter(x));
+			var api      = new CouchApi(_connectionString, _httpClient.Object, _couchEventLog.Object, strategy);
+			var model    = new DummyCouchModel { Id = Guid.NewGuid().ToString(), Rev = "123" };
+
+			//create a server response
+			var couchResponse = new CouchUpdateResponse { Rev = "new rev" };
+			var response = new HttpResponseMessage(HttpStatusCode.OK)
+			{
+				Content = new StringContent(JsonConvert.SerializeObject(couchResponse))
+			};
+
+			//setup a PUT call that returns a success call and records the content
+			HttpContent content = null;
+			_httpClient.Setup(c => c.PutAsync(GetDocumentUri(model.Id.ToString()), It.IsAny<HttpContent>()))
+				.ReturnsAsync(response)
+				.Callback<string, HttpContent>((_, c) => content = c);
+
+			//make the call and check the content passed to the server
+			await api.UpdateDocumentAsync(model);
+			Assert.IsNotNull(content, "Content should have been passed to the server");
+			var stringContent = await content.ReadAsStringAsync();
+			var expected = @"{
+""$type"":""Edge10.CouchDb.Client.Tests.TestCouchApi+DummyCouchModel, Edge10.CouchDb.Client.Tests"",
+""property"":""value"",
+""enumValue"":0,
+""_id"":""" + model.Id + @""",
+""_rev"":""123"",
+""_attachments"":{},
+""_deleted"":false,
+""type"":""DummyCouchModel""}";
+
+			Assert.AreEqual(expected.Replace("\r\n", string.Empty).Replace("\n", string.Empty), stringContent, "The document content was not correctly passed to the server");
+
+			//check that the revision was updated on the original
+			Assert.AreEqual("new rev", model.Rev, "The Revision should have been updated");
+			Assert.IsTrue(CustomStringWriter.WasWriteCalled);
+		}
+
+		[Test]
+		public async Task BulkUpdateAsync_Uses_Custom_Writer_If_Specified()
+		{
+			var strategy      = new SerializationStrategy(x => new CustomStreamReader(x), x => new CustomStringWriter(x));
+			var api           = new CouchApi(_connectionString, _httpClient.Object, _couchEventLog.Object, strategy);
+			var docs          = new[] { new DummyCouchModel { Id = Guid.NewGuid().ToString() }, new DummyCouchModel { Id = Guid.NewGuid().ToString() } };
+			var couchResponse = new[]
+			{
+				new CouchBulkUpdateResponseItem { Id = docs[0].Id, Ok = true, Rev = "111" },
+				new CouchBulkUpdateResponseItem { Id = docs[1].Id, Ok = true, Rev = "222" }
+			};
+			var response = new HttpResponseMessage(HttpStatusCode.OK)
+			{
+				Content = new StringContent(JsonConvert.SerializeObject(couchResponse))
+			};
+
+			HttpContent content = null;
+			_httpClient.Setup(c => c.PostAsync(GetBulkUri(), It.IsAny<HttpContent>()))
+				.ReturnsAsync(response)
+				.Callback<string, HttpContent>((_, c) => content = c);
+
+			await api.BulkUpdateAsync(docs);
+
+			var stringContent = await content.ReadAsStringAsync();
+			var expected = @"{
+""$type"":""<>f__AnonymousType0`1[[Edge10.CouchDb.Client.Tests.TestCouchApi+DummyCouchModel[], Edge10.CouchDb.Client.Tests]], Edge10.CouchDb.Client"",
+""docs"":[
+{
+""$type"":""Edge10.CouchDb.Client.Tests.TestCouchApi+DummyCouchModel, Edge10.CouchDb.Client.Tests"",
+""property"":""value"",
+""enumValue"":0,
+""_id"":""" + docs[0].Id + @""",
+""_attachments"":{},
+""_deleted"":false,
+""type"":""DummyCouchModel""
+},
+{
+""$type"":""Edge10.CouchDb.Client.Tests.TestCouchApi+DummyCouchModel, Edge10.CouchDb.Client.Tests"",
+""property"":""value"",
+""enumValue"":0,
+""_id"":""" + docs[1].Id + @""",
+""_attachments"":{},
+""_deleted"":false,
+""type"":""DummyCouchModel""
+}
+]
+}";
+
+			Assert.AreEqual(expected.Replace("\r\n", string.Empty).Replace("\n", string.Empty), stringContent, "The document content was not correctly passed to the server");
 			Assert.IsTrue(CustomStringWriter.WasWriteCalled);
 		}
 
