@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Edge10.CouchDb.Client.Changes;
 using Edge10.CouchDb.Client.Exceptions;
 using Edge10.CouchDb.Client.Results;
+using Edge10.CouchDb.Client.Tasks;
 using Edge10.CouchDb.Client.Utils;
 using Moq;
 using Newtonsoft.Json;
@@ -1634,6 +1635,129 @@ namespace Edge10.CouchDb.Client.Tests
 		public void GetListResult_Throws_Timeout_Exception_On_Timeout_Error()
 		{
 			TestCouchTimeoutExceptions(viewParameters => _couchApi.GetListResult<object>(viewParameters));
+		}
+
+		[Test]
+		public async Task GetActiveReplicationTasks_Returns_Empty_When_No_Tasks()
+		{
+			var expectedUrl = "https://server:1234/_active_tasks";
+
+			//create a response
+			var response     = new HttpResponseMessage(HttpStatusCode.OK);
+			response.Content = new StreamContent(CreateStreamWithContent(new object[0]));
+
+			//setup a successful HTTP call
+			_httpClient.Setup(c => c.GetAsync(expectedUrl)).ReturnsAsync(response);
+
+			//make the call and check the result
+			var result = await _couchApi.GetActiveReplicationTasks();
+			CollectionAssert.IsEmpty(result);
+		}
+
+		[Test]
+		public async Task GetActiveReplicationTasks_Returns_Empty_When_No_Replication_Tasks()
+		{
+			var expectedUrl = "https://server:1234/_active_tasks";
+
+			var data = new object[] {
+				new { type     = "somethingElse" },
+				new { property = "doesn't contain type property" }
+			};
+
+			//create a response
+			var response     = new HttpResponseMessage(HttpStatusCode.OK);
+			response.Content = new StreamContent(CreateStreamWithContent(data));
+
+			//setup a successful HTTP call
+			_httpClient.Setup(c => c.GetAsync(expectedUrl)).ReturnsAsync(response);
+
+			//make the call and check the result
+			var result = await _couchApi.GetActiveReplicationTasks();
+			CollectionAssert.IsEmpty(result);
+		}
+
+		[Test]
+		public async Task GetActiveReplicationTasks_Returns_Replication_Tasks()
+		{
+			var expectedUrl = "https://server:1234/_active_tasks";
+
+			var data = new object[] {
+				new { type = "somethingElse" },
+				new
+				{
+					type                    = "replication",
+					pid                     = "process id",
+					checkpointed_source_seq = 1,
+					continuous              = true,
+					doc_id                  = "document id",
+					doc_write_failures      = 2,
+					docs_read               = 3,
+					docs_written            = 4,
+					missing_revisions_found = 5,
+					progress                = 6,
+					replication_id          = "replication id",
+					revisions_checked       = 7,
+					source                  = "source url",
+					source_seq              = 8,
+					started_on              = 9,
+					target                  = "target url",
+					updated_on              = 10
+				},
+				new { property = "doesn't contain type property" },
+				new
+				{
+					type                    = "replication",
+					pid                     = "process id 2",
+					checkpointed_source_seq = 10,
+					continuous              = false,
+					doc_id                  = "document id 2",
+					doc_write_failures      = 20,
+					docs_read               = 30,
+					docs_written            = 40,
+					missing_revisions_found = 50,
+					progress                = 60,
+					replication_id          = "replication id 2",
+					revisions_checked       = 70,
+					source                  = "source url 2",
+					source_seq              = 80,
+					started_on              = 90,
+					target                  = "target url 2",
+					updated_on              = 100
+				}
+			};
+
+			//create a response
+			var response = new HttpResponseMessage(HttpStatusCode.OK);
+			response.Content = new StreamContent(CreateStreamWithContent(data));
+
+			//setup a successful HTTP call
+			_httpClient.Setup(c => c.GetAsync(expectedUrl)).ReturnsAsync(response);
+
+			//make the call and check the result
+			var result = await _couchApi.GetActiveReplicationTasks();
+			Assert.AreEqual(2, result.Count());
+			CheckReplicationTask(data[1], result.First());
+			CheckReplicationTask(data[3], result.Last());
+		}
+
+		private void CheckReplicationTask(dynamic source, ReplicationTask replicationTask)
+		{
+			Assert.AreEqual(source.pid, replicationTask.ProcessId);
+			Assert.AreEqual(source.checkpointed_source_seq, replicationTask.CheckpointedSourceSequence);
+			Assert.AreEqual(source.continuous, replicationTask.Continuous);
+			Assert.AreEqual(source.doc_id, replicationTask.DocumentId);
+			Assert.AreEqual(source.doc_write_failures, replicationTask.DocumentWriteFailures);
+			Assert.AreEqual(source.docs_read, replicationTask.DocumentsRead);
+			Assert.AreEqual(source.docs_written, replicationTask.DocumentsWritten);
+			Assert.AreEqual(source.missing_revisions_found, replicationTask.MissingRevisionsFound);
+			Assert.AreEqual(source.progress, replicationTask.Progress);
+			Assert.AreEqual(source.replication_id, replicationTask.ReplicationId);
+			Assert.AreEqual(source.revisions_checked, replicationTask.RevisionsChecked);
+			Assert.AreEqual(source.source, replicationTask.Source);
+			Assert.AreEqual(source.source_seq, replicationTask.SourceSequence);
+			Assert.AreEqual(source.started_on, replicationTask.StartedOn);
+			Assert.AreEqual(source.target, replicationTask.Target);
+			Assert.AreEqual(source.updated_on, replicationTask.UpdatedOn);
 		}
 
 		[Test]

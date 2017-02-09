@@ -4,6 +4,7 @@ using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Edge10.CouchDb.Client.Changes;
+using Edge10.CouchDb.Client.Tasks;
 using Newtonsoft.Json;
 
 namespace Edge10.CouchDb.Client
@@ -240,6 +241,12 @@ namespace Edge10.CouchDb.Client
 		/// <param name="viewParameters">The view parameters.</param>
 		/// <returns>The result of the list.</returns>
 		Task<TResult> GetListResult<TResult>(IViewParameters viewParameters);
+
+		/// <summary>
+		/// Gets the active replication tasks.
+		/// </summary>
+		/// <returns>The active replication tasks.</returns>
+		Task<IEnumerable<ReplicationTask>> GetActiveReplicationTasks();
 
 		/// <summary>
 		/// Applies the specified <paramref name="settingsChanges"/> to the serializer (combined
