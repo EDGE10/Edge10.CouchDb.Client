@@ -1687,7 +1687,7 @@ namespace Edge10.CouchDb.Client.Tests
 				{
 					type                    = "replication",
 					pid                     = "process id",
-					checkpointed_source_seq = 1,
+					checkpointed_source_seq = "1",
 					continuous              = true,
 					doc_id                  = "document id",
 					doc_write_failures      = 2,
@@ -1698,7 +1698,7 @@ namespace Edge10.CouchDb.Client.Tests
 					replication_id          = "replication id",
 					revisions_checked       = 7,
 					source                  = "source url",
-					source_seq              = 8,
+					source_seq              = "8",
 					started_on              = 9,
 					target                  = "target url",
 					updated_on              = 10
@@ -1708,7 +1708,7 @@ namespace Edge10.CouchDb.Client.Tests
 				{
 					type                    = "replication",
 					pid                     = "process id 2",
-					checkpointed_source_seq = 10,
+					checkpointed_source_seq = "10",
 					continuous              = false,
 					doc_id                  = "document id 2",
 					doc_write_failures      = 20,
@@ -1719,7 +1719,7 @@ namespace Edge10.CouchDb.Client.Tests
 					replication_id          = "replication id 2",
 					revisions_checked       = 70,
 					source                  = "source url 2",
-					source_seq              = 80,
+					source_seq              = "80",
 					started_on              = 90,
 					target                  = "target url 2",
 					updated_on              = 100
