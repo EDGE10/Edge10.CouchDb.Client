@@ -12,8 +12,10 @@ using System.Threading.Tasks;
 using Edge10.CouchDb.Client.Changes;
 using Edge10.CouchDb.Client.Exceptions;
 using Edge10.CouchDb.Client.Results;
+using Edge10.CouchDb.Client.Tasks;
 using Edge10.CouchDb.Client.Utils;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 
 namespace Edge10.CouchDb.Client
@@ -648,6 +650,15 @@ namespace Edge10.CouchDb.Client
 		}
 
 		/// <summary>
+		/// Gets the active replication tasks.
+		/// </summary>
+		/// <returns>The active replication tasks.</returns>
+		public async Task<IEnumerable<ReplicationTask>> GetActiveReplicationTasks()
+		{
+			return await GetActiveTasks<ReplicationTask>(ReplicationTask.TaskType);
+		}
+
+		/// <summary>
 		/// Applies the specified <paramref name="settingsChanges"/> to the serializer (combined
 		/// with the defaults) until the returned token is disposed.
 		/// </summary>
@@ -838,6 +849,25 @@ namespace Edge10.CouchDb.Client
 			var responseContent = await response.Content.ReadAsStringAsync();
 			var updateDetails   = JsonConvert.DeserializeObject<CouchUpdateResponse>(responseContent);
 			document.Rev        = updateDetails.Rev;
+		}
+
+		private async Task<IEnumerable<TTask>> GetActiveTasks<TTask>(string taskType)
+		{
+			var url = $"{_url}/_active_tasks";
+
+			var tasks = new List<TTask>();
+			using (var response = await _client.GetAsync(url))
+			{
+				var allTasks = await GetSerializedResultContent<JArray>(response);
+				foreach (var task in allTasks)
+				{
+					var type = task["type"];
+					if (type != null && type.Value<string>() == taskType)
+						tasks.Add(task.ToObject<TTask>());
+				}
+			}
+
+			return tasks;
 		}
 	}
 }
