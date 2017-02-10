@@ -24,7 +24,7 @@ namespace Edge10.CouchDb.Client.Tasks
 		/// Gets or sets the checkpointed source sequence number.
 		/// </summary>
 		[JsonProperty("checkpointed_source_seq")]
-		public int CheckpointedSourceSequence { get; set; }
+		public string CheckpointedSourceSequence { get; set; }
 
 		/// <summary>
 		/// Gets or sets a value indicating whether this <see cref="ReplicationTask"/> is continuous.
@@ -66,7 +66,7 @@ namespace Edge10.CouchDb.Client.Tasks
 		/// Gets or sets the progress as a percentage.
 		/// </summary>
 		[JsonProperty("progress")]
-		public int Progress { get; set; }
+		public int? Progress { get; set; }
 
 		/// <summary>
 		/// Gets or sets the ID of the replication.  Note this is different to the ID of the replicator document.
@@ -90,7 +90,7 @@ namespace Edge10.CouchDb.Client.Tasks
 		/// Gets or sets the source sequence number.
 		/// </summary>
 		[JsonProperty("source_seq")]
-		public int SourceSequence { get; set; }
+		public string SourceSequence { get; set; }
 
 		/// <summary>
 		/// Gets or sets the time the replication was started as a UTC unix time.
