@@ -96,7 +96,7 @@ namespace Edge10.CouchDb.Client.Tasks
 		/// Gets or sets the time the replication was started as a UTC unix time.
 		/// </summary>
 		[JsonProperty("started_on")]
-		public int StartedOn { get; set; }
+		public long StartedOn { get; set; }
 
 		/// <summary>
 		/// Gets or sets the URL of the target database.
@@ -108,6 +108,6 @@ namespace Edge10.CouchDb.Client.Tasks
 		/// Gets or sets the time the replication task was last updated as a UTC unix time.  Updates are made by the job as progress occurs.
 		/// </summary>
 		[JsonProperty("updated_on")]
-		public int UpdatedOn { get; set; }
+		public long UpdatedOn { get; set; }
 	}
 }
