@@ -61,6 +61,7 @@
     <Compile Include="Changes\TestChangesParameters.cs" />
     <Compile Include="TestCouchApi.cs" />
     <Compile Include="TestCouchDbConnectionStringBuilder.cs" />
+    <Compile Include="TestSerializationStrategy.cs" />
     <Compile Include="TestViewParameters.cs" />
   </ItemGroup>
   <ItemGroup>
