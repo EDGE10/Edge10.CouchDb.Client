@@ -39,8 +39,12 @@ namespace Edge10.CouchDb.Client
 		/// <param name="connectionString">The connection string.</param>
 		/// <param name="eventLog">The couch event log</param>
 		/// <param name="serializationStrategy">The serialization strategy.</param>
-		public CouchApi(ICouchDbConnectionStringBuilder connectionString, ICouchEventLog eventLog = null, SerializationStrategy serializationStrategy = null) 
-			: this(connectionString, new HttpClientFacade(new HttpClientHandler()), eventLog ?? NullCouchEventLog.Instance, serializationStrategy)
+		/// <param name="httpClientHandler">The HTTP client handler.</param>
+		public CouchApi(ICouchDbConnectionStringBuilder connectionString, ICouchEventLog eventLog = null, SerializationStrategy serializationStrategy = null, HttpClientHandler httpClientHandler = null) 
+			: this(connectionString, 
+				  new HttpClientFacade(httpClientHandler ?? new HttpClientHandler()), 
+				  eventLog ?? NullCouchEventLog.Instance, 
+				  serializationStrategy)
 		{
 		}
 

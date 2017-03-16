@@ -6,6 +6,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Edge10.CouchDb.Client.Changes;
 using Edge10.CouchDb.Client.Exceptions;
@@ -2153,6 +2154,28 @@ namespace Edge10.CouchDb.Client.Tests
 			Assert.IsTrue(CustomStringWriter.WasWriteCalled);
 		}
 
+		[Test]
+		public async Task Uses_Custom_HttpClientHandler_If_Specified()
+		{
+			var clientHandler = new Mock<MockHttpClientHandler> { CallBase = true };
+			var testSubject   = new CouchApi(_connectionString, httpClientHandler: clientHandler.Object);
+
+			var response = new HttpResponseMessage(HttpStatusCode.OK)
+			{
+				Content = new StringContent(@"{_id:""123"",_rev:""456""}")
+			};
+
+			clientHandler.Setup(c => c.MockableSendAsync(It.Is<HttpRequestMessage>(request =>
+					request.RequestUri.ToString() == "https://server:1234/database/document"),
+					It.IsAny<CancellationToken>()))
+				.ReturnsAsync(response);
+			
+			var document = await testSubject.GetDocumentAsync<DummyCouchModel>("document");
+			Assert.AreEqual("123", document.Id);
+			Assert.AreEqual("456", document.Rev);
+			Assert.IsTrue(CustomStreamReader.WasReadCalled);
+		}
+
 		private string QuoteString(string str)
 		{
 			return $"\"{str}\"";
@@ -2343,6 +2366,19 @@ namespace Edge10.CouchDb.Client.Tests
 			}
 
 			public static bool WasWriteCalled { get; set; }
+		}
+
+		public class MockHttpClientHandler : HttpClientHandler
+		{
+			public virtual Task<HttpResponseMessage> MockableSendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+			{
+				return base.SendAsync(request, cancellationToken);
+			}
+
+			protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+			{
+				return this.MockableSendAsync(request, cancellationToken);
+			}
 		}
 	}
 }
