@@ -153,13 +153,6 @@ namespace Edge10.CouchDb.Client
 			return builder.ToString();
 		}
 
-		private string FormatKeyParam(object[] key)
-		{
-			if (key.Length == 1)
-				return WebUtility.UrlEncode(JsonConvert.SerializeObject(key[0], Formatting.None, new IsoDateTimeConverter()));
-			return PrepareArrayValue(key);
-		}
-
 		private string PrepareArrayValue(IEnumerable<object> values)
 		{
 			var valuesArray = values as object[] ?? values.ToArray();
