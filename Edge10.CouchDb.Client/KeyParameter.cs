@@ -11,18 +11,22 @@ namespace Edge10.CouchDb.Client
 
 		public static implicit operator KeyParameter(string key)
 		{
-			return new KeyParameter
-			{
-				FormattedValue = WebUtility.UrlEncode(JsonConvert.SerializeObject(key, Formatting.None, new IsoDateTimeConverter()))
-			};
+			return ToKeyParameter(key);
 		}
 
 		public static implicit operator KeyParameter(Array key)
 		{
-			var value = JsonConvert.SerializeObject(key, Formatting.None, new IsoDateTimeConverter());
+			if (key.Length == 0)
+				return null;
+
+			return ToKeyParameter(key);
+		}
+
+		private static KeyParameter ToKeyParameter(object key)
+		{
 			return new KeyParameter
 			{
-				FormattedValue = WebUtility.UrlEncode(value)
+				FormattedValue = WebUtility.UrlEncode(JsonConvert.SerializeObject(key, Formatting.None, new IsoDateTimeConverter()))
 			};
 		}
 	}
