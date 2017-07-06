@@ -87,6 +87,34 @@ namespace Edge10.CouchDb.Client.Tests
 		}
 
 		[Test]
+		public void CreateQueryString_Null_Array_For_Key()
+		{
+			var parameters = new ViewParameters("view", "designdoc")
+			{
+				Key = (object[]) null
+			};
+
+			parameters.QueryStringParameters.Add("custom", "123");
+
+			var queryString = parameters.CreateQueryString();
+			Assert.That(queryString, Does.Not.Contain("key"), "Key was set");
+		}
+
+		[Test]
+		public void CreateQueryString_Null_String_For_Key()
+		{
+			var parameters = new ViewParameters("view", "designdoc")
+			{
+				Key = (string) null
+			};
+
+			parameters.QueryStringParameters.Add("custom", "123");
+
+			var queryString = parameters.CreateQueryString();
+			Assert.That(queryString, Does.Not.Contain("key"), "Key was set");
+		}
+
+		[Test]
 		public void CreateQueryString_Builds_QueryString_From_Only_Custom_Parameters()
 		{
 			var parameters = new ViewParameters("view", "design");

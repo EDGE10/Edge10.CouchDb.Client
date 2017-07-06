@@ -11,12 +11,15 @@ namespace Edge10.CouchDb.Client
 
 		public static implicit operator KeyParameter(string key)
 		{
+			if (key == null)
+				return null;
+
 			return ToKeyParameter(key);
 		}
 
 		public static implicit operator KeyParameter(Array key)
 		{
-			if (key.Length == 0)
+			if (key == null || key.Length == 0)
 				return null;
 
 			return ToKeyParameter(key);
