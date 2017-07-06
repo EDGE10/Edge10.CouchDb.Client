@@ -83,6 +83,7 @@
     <Compile Include="ICouchQueryParameters.cs" />
     <Compile Include="IPagedResult.cs" />
     <Compile Include="IViewParameters.cs" />
+    <Compile Include="KeyParameter.cs" />
     <Compile Include="NullCouchEventLog.cs" />
     <Compile Include="PagedResult.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

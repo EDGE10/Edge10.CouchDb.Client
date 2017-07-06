@@ -59,6 +59,20 @@ namespace Edge10.CouchDb.Client.Tests
 		}
 
 		[Test]
+		public void CreateQueryString_Unwraps_Single_Key_Item()
+		{
+			var parameters = new ViewParameters("view", "designdoc")
+			{
+				Key = "ten"
+			};
+
+			parameters.QueryStringParameters.Add("custom", "123");
+
+			var queryString = parameters.CreateQueryString();
+			Assert.IsTrue(queryString.Contains("key=%22ten%22"), "Key was not set");
+		}
+
+		[Test]
 		public void CreateQueryString_Builds_QueryString_From_Only_Custom_Parameters()
 		{
 			var parameters = new ViewParameters("view", "design");
