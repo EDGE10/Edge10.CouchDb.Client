@@ -1882,6 +1882,27 @@ namespace Edge10.CouchDb.Client.Tests
 		}
 
 		[Test]
+		public async Task GetDocumentAsync_With_Revision_Uses_Custom_Reader_If_Specified()
+		{
+			var strategy     = new SerializationStrategy(x => new CustomStreamReader(x), x => new CustomStringWriter(x));
+			var api          = new CouchApi(_connectionString, _httpClient.Object, _couchEventLog.Object, strategy);
+			var expectedUrl  = "https://server:1234/database/document?rev=rev1";
+			var response     = new HttpResponseMessage(HttpStatusCode.OK)
+			{
+				Content = new StringContent(@"{_id:""123"",_rev:""456""}")
+			};
+
+			//setup a successful HTTP call
+			_httpClient.Setup(c => c.GetAsync(expectedUrl))
+				.ReturnsAsync(response);
+
+			var document = await api.GetDocumentAsync<DummyCouchModel>("document", "rev1");
+			Assert.AreEqual("123", document.Id);
+			Assert.AreEqual("456", document.Rev);
+			Assert.IsTrue(CustomStreamReader.WasReadCalled);
+		}
+
+		[Test]
 		public async Task GetViewRowsAsync_Uses_Custom_Reader_If_Specified()
 		{
 			var strategy = new SerializationStrategy(x => new CustomStreamReader(x), x => new CustomStringWriter(x));
