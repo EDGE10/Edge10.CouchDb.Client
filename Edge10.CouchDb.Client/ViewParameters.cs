@@ -71,7 +71,7 @@ namespace Edge10.CouchDb.Client
 		/// <summary>
 		/// Gets or sets a key.
 		/// </summary>
-		public IEnumerable<object> Key { get; set; }
+		public KeyParameter Key { get; set; }
 
 		/// <summary>
 		/// Gets or sets the keys to be posted to the view.  If specified, these
@@ -131,8 +131,8 @@ namespace Edge10.CouchDb.Client
 				parameters.Add("inclusive_end", InclusiveEnd.Value.ToString().ToLower());
 			if (Skip.HasValue)
 				parameters.Add("skip", Skip.Value.ToString());
-			if (Key != null && Key.Any())
-				parameters.Add("key", PrepareArrayValue(Key));
+			if (Key != null)
+				parameters.Add("key", Key.FormattedValue);
 			if (StartKey != null && StartKey.Any())
 				parameters.Add("startkey", PrepareArrayValue(StartKey));
 			if (EndKey != null && EndKey.Any())

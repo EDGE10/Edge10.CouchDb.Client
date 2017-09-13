@@ -67,6 +67,7 @@
     <Compile Include="TestCouchDbConnectionStringBuilder.cs" />
     <Compile Include="TestCouchModelBase.cs" />
     <Compile Include="TestNullCouchEventLog.cs" />
+    <Compile Include="TestSerializationStrategy.cs" />
     <Compile Include="TestViewParameters.cs" />
     <Compile Include="Utils\TestDisposableWrapper.cs" />
   </ItemGroup>

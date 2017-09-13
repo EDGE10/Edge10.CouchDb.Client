@@ -50,7 +50,7 @@ namespace Edge10.CouchDb.Client
 		/// <summary>
 		/// Gets or sets a key.
 		/// </summary>
-		IEnumerable<object> Key { get; set; }
+		KeyParameter Key { get; set; }
 
 		/// <summary>
 		/// Gets or sets a start key.

@@ -83,6 +83,7 @@
     <Compile Include="ICouchQueryParameters.cs" />
     <Compile Include="IPagedResult.cs" />
     <Compile Include="IViewParameters.cs" />
+    <Compile Include="KeyParameter.cs" />
     <Compile Include="NullCouchEventLog.cs" />
     <Compile Include="PagedResult.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -90,6 +91,7 @@
     <Compile Include="Results\CouchUpdateResponse.cs" />
     <Compile Include="Results\CouchBulkUpdateResponseItem.cs" />
     <Compile Include="Results\ViewResultRow.cs" />
+    <Compile Include="SerializationStrategy.cs" />
     <Compile Include="Utils\DisposableWrapper.cs" />
     <Compile Include="Utils\HttpClientFacade.cs" />
     <Compile Include="Utils\HttpResponseMessageExtensions.cs" />

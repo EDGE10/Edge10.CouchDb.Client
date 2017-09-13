@@ -28,6 +28,7 @@ namespace Edge10.CouchDb.Client
 	{
 		private IHttpClientFacade _client;
 		private readonly ICouchEventLog _eventLog;
+		private readonly SerializationStrategy _serializationStrategy;
 		private readonly string _url;
 		private readonly string _databaseName;
 		private Action<JsonSerializerSettings> _settingsChanges;
@@ -37,7 +38,13 @@ namespace Edge10.CouchDb.Client
 		/// </summary>
 		/// <param name="connectionString">The connection string.</param>
 		/// <param name="eventLog">The couch event log</param>
-		public CouchApi(ICouchDbConnectionStringBuilder connectionString, ICouchEventLog eventLog = null) : this(connectionString, new HttpClientFacade(new HttpClientHandler()), eventLog ?? NullCouchEventLog.Instance)
+		/// <param name="serializationStrategy">The serialization strategy.</param>
+		/// <param name="httpClientHandler">The HTTP client handler.</param>
+		public CouchApi(ICouchDbConnectionStringBuilder connectionString, ICouchEventLog eventLog = null, SerializationStrategy serializationStrategy = null, HttpClientHandler httpClientHandler = null) 
+			: this(connectionString, 
+				  new HttpClientFacade(httpClientHandler ?? new HttpClientHandler()), 
+				  eventLog ?? NullCouchEventLog.Instance, 
+				  serializationStrategy)
 		{
 		}
 
@@ -47,17 +54,19 @@ namespace Edge10.CouchDb.Client
 		/// <param name="connectionString">The connection string.</param>
 		/// <param name="httpClient">The HTTP client facade.</param>
 		/// <param name="eventLog">The couch event log.</param>
-		internal CouchApi(ICouchDbConnectionStringBuilder connectionString, IHttpClientFacade httpClient, ICouchEventLog eventLog)
+		/// <param name="serializationStrategy">The serialization strategy.</param>
+		internal CouchApi(ICouchDbConnectionStringBuilder connectionString, IHttpClientFacade httpClient, ICouchEventLog eventLog, SerializationStrategy serializationStrategy)
 		{
 			connectionString.ThrowIfNull(nameof(connectionString));
 			httpClient.ThrowIfNull(nameof(httpClient));
 			eventLog.ThrowIfNull(nameof(eventLog));
 
-			_client         = httpClient;
-			_eventLog       = eventLog;
-			_databaseName   = connectionString.DatabaseName;
-			_url            = GetServerUrl(connectionString);
-			_client.Timeout = TimeSpan.FromMinutes(20);
+			_client                = httpClient;
+			_eventLog              = eventLog;
+			_serializationStrategy = serializationStrategy;
+			_databaseName          = connectionString.DatabaseName;
+			_url                   = GetServerUrl(connectionString);
+			_client.Timeout        = TimeSpan.FromMinutes(20);
 
 			_client.SetAuthorizationHeader(new AuthenticationHeaderValue("Basic", Convert.ToBase64String(Encoding.UTF8.GetBytes($"{connectionString.User}:{connectionString.Password}"))));
 		}
@@ -709,7 +718,7 @@ namespace Edge10.CouchDb.Client
 
 		private TData GetSerializedContent<TData>(Stream content)
 		{
-			using (var sr = new StreamReader(content))
+			using (var sr = _serializationStrategy != null ? _serializationStrategy.ReaderFactory(content) : new StreamReader(content))
 			using (var jsonTextReader = new JsonTextReader(sr))
 			{
 				var serializer = CreateSerializer();
@@ -838,7 +847,8 @@ namespace Edge10.CouchDb.Client
 			var serializer = CreateSerializer();
 			var builder    = new StringBuilder();
 
-			using (var writer = new JsonTextWriter(new StringWriter(builder)))
+			using (var sw = _serializationStrategy != null ? _serializationStrategy.WriterFactory(builder) : new StringWriter(builder))
+			using (var writer = new JsonTextWriter(sw))
 				serializer.Serialize(writer, document);
 
 			return new StringContent(builder.ToString(), Encoding.UTF8, "application/json");
