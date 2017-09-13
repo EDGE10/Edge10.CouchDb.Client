@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Edge10.CouchDb.Client.Utils
 {
 	/// <summary>
 	/// A class containing extension methods to help in throwing exceptions.
 	/// </summary>
+	[ExcludeFromCodeCoverage]
 	internal static class ThrowExtensions
 	{
 		/// <summary>

@@ -56,13 +56,20 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Changes\TestChange.cs" />
+    <Compile Include="Exceptions\TestCouchTimeoutException.cs" />
+    <Compile Include="Exceptions\TestConflictException.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TestAttachmentMetaData.cs" />
     <Compile Include="TestAttachmentsConverter.cs" />
     <Compile Include="Changes\TestChangesParameters.cs" />
     <Compile Include="TestCouchApi.cs" />
     <Compile Include="TestCouchDbConnectionStringBuilder.cs" />
+    <Compile Include="TestCouchModelBase.cs" />
+    <Compile Include="TestNullCouchEventLog.cs" />
     <Compile Include="TestSerializationStrategy.cs" />
     <Compile Include="TestViewParameters.cs" />
+    <Compile Include="Utils\TestDisposableWrapper.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
