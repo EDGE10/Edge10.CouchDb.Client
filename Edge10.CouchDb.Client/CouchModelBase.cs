@@ -28,7 +28,7 @@ namespace Edge10.CouchDb.Client
 		/// </summary>
 		[JsonProperty(PropertyName = "_attachments")]
 		[JsonConverter(typeof(AttachmentsConverter))]
-		public IList<IAttachmentMetaData> Attachments { get; private set; } = new List<IAttachmentMetaData>();
+		public IList<IAttachmentMetaData> Attachments { get; } = new List<IAttachmentMetaData>();
 
 		/// <summary>
 		/// Gets or sets a value indicating whether this <see cref="ICouchModel"/> is deleted.

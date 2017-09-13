@@ -29,6 +29,13 @@ namespace Edge10.CouchDb.Client.Tests
 		}
 
 		[Test]
+		public void Test_Port_Not_Numeric()
+		{
+			_connectionStringBuilder.ConnectionString = "port=ten";
+			Assert.That(_connectionStringBuilder.Port, Is.Null, "Port should be null when not numeric");
+		}
+
+		[Test]
 		public void Test_Properties_SetFromConnectionString()
 		{
 			_connectionStringBuilder.ConnectionString = "seRvEr=servername;pOrt=456;User=my user;Password=A Password;DatabaseName=db;Unknown=whatever";
