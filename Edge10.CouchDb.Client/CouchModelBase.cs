@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Edge10.CouchDb.Client
 {
@@ -53,5 +54,30 @@ namespace Edge10.CouchDb.Client
 		/// </summary>
 		[JsonProperty("type")]
 		public string Type { get; set; }
+
+		/// <summary>
+		/// Creates a new object that is a copy of the current instance.
+		/// </summary>
+		/// <returns>
+		/// A new object that is a copy of this instance.
+		/// </returns>
+		public object Clone()
+		{
+			var serializer = new JsonSerializer
+			{
+				TypeNameHandling = TypeNameHandling.Objects
+			};
+
+			var newObject = (ICouchModel)JToken.FromObject(this, serializer).ToObject(this.GetType(), serializer);
+			newObject.Id  = Guid.NewGuid().ToString();
+			newObject.Rev = null;
+
+			//remove any stub attachments - we can't get the content from the server so we can't clone them.
+			//note: AttachmentMetaData only supports Stub=true attachments so there is no need to filter
+			//the attachments collection until inline attachments are supported
+			newObject.Attachments.Clear();
+
+			return newObject;
+		}
 	}
 }

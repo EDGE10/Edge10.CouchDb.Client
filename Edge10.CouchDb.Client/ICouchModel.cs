@@ -1,11 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace Edge10.CouchDb.Client
 {
 	/// <summary>
 	/// An interface for model classes stored in CouchDB.
 	/// </summary>
-	public interface ICouchModel
+	public interface ICouchModel : ICloneable
 	{
 		/// <summary>
 		/// The CouchDB ID for this document.

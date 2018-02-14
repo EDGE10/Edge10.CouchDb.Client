@@ -63,6 +63,8 @@
   <ItemGroup>
     <Compile Include="AttachmentMetaData.cs" />
     <Compile Include="AttachmentsConverter.cs" />
+    <Compile Include="Configuration\CouchConfigurationApi.cs" />
+    <Compile Include="Configuration\ICouchConfigurationApi.cs" />
     <Compile Include="CouchModelBase.cs" />
     <Compile Include="Changes\Change.cs" />
     <Compile Include="Changes\ChangeRevision.cs" />
@@ -104,6 +106,7 @@
     <None Include="app.config" />
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
